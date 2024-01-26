@@ -11,10 +11,6 @@ local wb, hb = screen.getAspectRatio()
  
 local getscreen = gpu.getScreen()
  
--- local table1 = computer.getDeviceInfo()
- 
--- times
- 
 local timeUnits = {
     {unit = " days", value = 60 * 60 * 24},
     {unit = " hours", value = 60 * 60},
