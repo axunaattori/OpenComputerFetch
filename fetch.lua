@@ -1,92 +1,207 @@
-local computer = require("computer")
+--code by axunaattori
+ 
 local component = require("component")
-local screen = component.screen
+local computer = require("computer")
+local term = require("term")
 local gpu = component.gpu
+local screen = component.screen
 local fs = component.filesystem
  
-local uptime = computer.uptime()
+local logo = {
+"##########",
+"#OPEN OS #",
+"#        #",
+"#        #",
+"#        #",
+"##########"
+}
+ 
+local byteUnits = {
+"B",
+"KiB",
+"MiB",
+"GiB",
+"TiB",
+"PiB",
+"EiB",
+"ZiB",
+"YiB"
+}
+ 
+local ansiColors = {
+0x000000,
+0x800000,
+0x008000,
+0x808000,
+0x000080,
+0x800080,
+0x008080,
+0xc0c0c0,
+0x808080,
+0xFF0000,
+0x00FF00,
+0xFFFF00,
+0x0000FF,
+0xFF00FF,
+0x00FFFF,
+0xFFFFFF
+}
+ 
 local w, h = gpu.getResolution()
 local w2, h2 = gpu.maxResolution()
 local wb, hb = screen.getAspectRatio()
  
-local getscreen = gpu.getScreen()
+local writePos = 0
  
-local timeUnits = {
-    {unit = " days", value = 60 * 60 * 24},
-    {unit = " hours", value = 60 * 60},
-    {unit = " mins", value = 60},
-    {unit = " secs", value = 1}
-}
- 
--- getMemory
-local maxmem = computer.totalMemory()
-local freemem = computer.freeMemory()
-local usedmem = maxmem - freemem
-local permem = math.floor(usedmem/maxmem*100)
- 
---hard drive
-local used = fs.spaceUsed()
-local total = fs.spaceTotal()
-local perdrive = math.floor(used/total*100)
- 
-local info = computer.getDeviceInfo()
- 
--- "Borrowed" code
-for k, v in pairs(info) do
-    if v.class == "processor" then
-        _ProcessorName = --[[v.vendor.." "..]]v.product
- 
-        if v.clock == nil or v.clock == "" then else
-            v.clock = v.clock:match"[^+]*"
- 
-            _ProcessorClock    = v.clock.."Hz"
-        end
-    end
+function printlogo()
+  gpu.setForeground(0x808080)
+  for i = 1, #logo do
+    print(logo[i])    
+  end
+  gpu.fill(CurStartX+1, CurStartY+1, 8, 4, " ")
+  gpu.setForeground(0xFFFFFF)
+  term.setCursor(CurStartX+1, CurStartY+1)
+  io.write("OPEN OS")
 end
  
-function convertTime(time)
-      local timeString = ""
-    for _, timeUnit in ipairs(timeUnits) do
-        local unitValue = math.floor(time / timeUnit.value)
-        if unitValue > 0 then
-            timeString = timeString .. unitValue .. timeUnit.unit .. ", "
-            time = time % timeUnit.value
-        end
-    end
-    return string.sub(timeString, 1, -3)
+local min = 60
+local hour = 60*60
+local day = hour*24
+ 
+function uptime()
+  term.setCursor(CurStartX+12, CurStartY+writePos)
+  gpu.setForeground(0xFFFF00)
+  io.write("Uptime")
+  gpu.setForeground(0xFFFFFF)
+  io.write(": ")
+ 
+  local days = math.floor(computer.uptime() / (60*60*24))
+  local hours = math.floor((computer.uptime() % (60*60*24)) / (60*60))
+  local mins = math.floor((computer.uptime() % (60*60)) / 60)
+  local secs = math.floor(computer.uptime() % 60)
+ 
+  local time = ""
+ 
+  if days > 0 then
+      time = time .. days .. " days, "
+  end
+  if hours > 0 then
+      time = time .. hours .. " hours, "
+  end
+  if mins > 0 then
+      time = time .. mins .. " minutes, "
+  end
+  if secs > 0 then
+      time = time .. secs .. " seconds"
+  end
+ 
+  time = time:gsub(", $", "")
+ 
+  print(time)
+ 
+  writePos = writePos + 1
 end
  
-function formatBytes(bytes)
-  local units = {'Bytes', 'KiB', 'MiB', 'GiB'}
-    local unitIndex = 1
- 
-    while bytes >= 1024 and unitIndex < #units do
-        bytes = bytes / 1024
-        unitIndex = unitIndex + 1
-    end
- 
-    return string.format("%.2f %s", bytes, units[unitIndex])
+function convertBytes(bytes)
+  local i = 1  
+  while 1 < bytes do
+    bytes = bytes / 1024
+    i = i + 1
+  end
+  bytes = bytes * 1024 -- EASY FIX!!!
+  return math.floor(bytes * 100 + 0.5) / 100 .. " " .. byteUnits[i - 1]
 end
  
-function fetch()
-  gpu.setForeground(0xF9F178)
-  io.write("Uptime: ")
+function memory()
+  term.setCursor(CurStartX+12, CurStartY+writePos)
+  gpu.setForeground(0xFFFF00)
+  io.write("Memory")
   gpu.setForeground(0xFFFFFF)
-  print(convertTime(uptime))
-  gpu.setForeground(0xF9F178)
-  io.write("Display: ")
+  io.write(": ")
+ 
+  local usedMem = convertBytes(computer.totalMemory() - computer.freeMemory())
+  local totalMem = convertBytes(computer.totalMemory())
+  local perMem = math.floor((computer.totalMemory() - computer.freeMemory()) / computer.totalMemory()*100) -- per short for percent
+  
+  io.write(usedMem .. " / " .. totalMem .. " (")
+ 
+  if perMem < 50 then
+    gpu.setForeground(0x008000)
+    io.write(perMem)
+  elseif perMem > 50 and perMem < 80 then
+    gpu.setForeground(0xFFFF00)
+    io.write(perMem)
+  else
+    gpu.setForeground(0x800000)
+    io.write(perMem)
+  end
+  io.write("%")
   gpu.setForeground(0xFFFFFF)
-  print(w .. "x" .. h .. " (Usable: " .. w2 .. "x" .. h2 .. ") (In-World: " .. wb .. "x" .. hb .. ")")
-  gpu.setForeground(0xF9F178)
-  io.write("CPU: ")
-  gpu.setForeground(0xFFFFFF)
-  print(_ProcessorName .. " @ " .. _ProcessorClock)
-  gpu.setForeground(0xF9F178)
-  io.write("Memory: ")
-  gpu.setForeground(0xFFFFFF)
-  print(formatBytes(usedmem) .. " / " .. formatBytes(maxmem) .. " (" .. permem .. "%)")
-  --remember to add later
-  --print("Disk (Main): " .. formatBytes(used) .. " / " .. formatBytes(total) .. " (" .. perdrive .. "%)")
+  io.write(")")
+ 
+  writePos = writePos + 1
 end
  
-fetch()
+function screen()
+  term.setCursor(CurStartX+12, CurStartY+writePos)
+  gpu.setForeground(0xFFFF00)
+  io.write("Display")
+  gpu.setForeground(0xFFFFFF)
+  io.write(": " .. w .. "x" .. h .. " (max: " .. w2 .. "x" .. h2 .. ") " .. "(In-world: " .. wb .. "x" .. hb .. ")")
+ 
+  writePos = writePos + 1
+end
+ 
+function disk()
+  term.setCursor(CurStartX + 12, CurStartY + writePos)
+  gpu.setForeground(0xFFFF00)
+  io.write("Disk")
+  gpu.setForeground(0xFFFFFF)
+  io.write(": " .. convertBytes(fs.spaceUsed()) .. " / " .. convertBytes(fs.spaceTotal()) .. " (")
+  
+  local perDisk = math.floor(fs.spaceUsed() / fs.spaceTotal()*100)
+ 
+  if perDisk < 50 then
+    gpu.setForeground(0x008000)
+    io.write(perDisk)
+  elseif perDisk > 50 and perDisk < 80 then
+    gpu.setForeground(0xFFFF00)
+    io.write(perDisk)
+  else
+    gpu.setForeground(0x800000)
+    io.write(perDisk)
+  end
+  io.write("%")
+  gpu.setForeground(0xFFFFFF)
+  io.write(")")
+    
+  writePos = writePos + 1
+end
+ 
+function colorTest()
+  term.setCursor(CurStartX + 12, CurStartY + 1 + writePos)
+ 
+  for i = 1, 8 do
+    gpu.setBackground(ansiColors[i])
+    io.write("   ")
+  end
+  term.setCursor(CurStartX + 12, CurStartY + 2 + writePos)
+  for i = 1, 8 do
+    gpu.setBackground(ansiColors[i + 8])
+    io.write("   ")
+  end
+end
+ 
+CurStartX, CurStartY = term.getCursor()
+ 
+printlogo()
+ 
+uptime()
+ 
+screen()
+ 
+memory()
+ 
+disk()
+ 
+colorTest()
