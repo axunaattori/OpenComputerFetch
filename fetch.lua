@@ -159,13 +159,13 @@ function disk() -- fastfetch calls everything disks in my experience so why shou
   local primaryFS = component.getPrimary("filesystem")
   local FSspacetotal = {primaryFS.spaceTotal()}
   local FSspaceused = {primaryFS.spaceUsed()}
-  local perDisk = {math.floor(primaryFS.spaceUsed() / primaryFS.spaceTotal()) * 100}
+  local perDisk = {math.floor(primaryFS.spaceUsed() / primaryFS.spaceTotal() * 100)}
   for address, type in CL do
     if type == "filesystem" then
       local fs = component.proxy(address)
       table.insert(FSspacetotal, fs.spaceTotal())
       table.insert(FSspaceused , fs.spaceUsed())
-      table.insert(perDisk, math.floor(fs.spaceUsed() / fs.spaceTotal()) * 100)
+      table.insert(perDisk, math.floor(fs.spaceUsed() / fs.spaceTotal() * 100)) -- funny little CODING ERROR!!!!!!
     end
   end
 
