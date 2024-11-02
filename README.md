@@ -1,6 +1,6 @@
 Fetch ripoff in opencomputers
 
-(image from the ocelet emulator)
+(image from the ocelot emulator)
 
 
 ![image](https://github.com/user-attachments/assets/23834db9-1bbe-469b-862c-5f417b8e31b0)
