@@ -1,21 +1,9 @@
 Fetch ripoff in opencomputers
 
-(image from mc 1.7.10)
+(image from the ocelet emulator)
 
 
-
-![image](https://github.com/user-attachments/assets/e4e413c5-8f14-4a1b-b80e-5bcdcfdaa9c7)
-
-
-
-
-(another image but with way worse hardware)
-
-
-
-![image](https://github.com/user-attachments/assets/7c849a68-2382-4bc4-bad2-a7784460c849)
-
-
+![image](https://github.com/user-attachments/assets/23834db9-1bbe-469b-862c-5f417b8e31b0)
 
 
 
